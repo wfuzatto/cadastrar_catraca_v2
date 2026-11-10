@@ -5,6 +5,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+concurrency:
+  group: catraca-v2-windows-release
+  cancel-in-progress: true
+
 permissions:
   contents: write
 
