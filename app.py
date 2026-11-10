@@ -28,7 +28,7 @@ class WebcamDialog(tk.Toplevel):
         self.configure(bg=BG)
         self.on_capture=on_capture; self.running=False; self.camera=None
         self.stable_since=None; self.closed=False
-        self.preview=tk.Label(self,bg="#18263A",width=640,height=480)
+        self.preview=tk.Label(self,bg="#18263A")
         self.preview.pack(padx=18,pady=16)
         self.indicator=tk.Label(self,text="Centralize o rosto dentro da guia verde",font=FONT,bg=BG,fg=TEXT)
         self.indicator.pack(pady=6)
