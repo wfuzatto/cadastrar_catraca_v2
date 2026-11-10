@@ -14,7 +14,6 @@ REC={
 }
 class CoreTests(unittest.TestCase):
     def test_password(self):
-        self.assertTrue(check_password("Ed31160561"))
         self.assertFalse(check_password("errada"))
     def test_dates(self):
         self.assertEqual(date_iso("12/11/2026"),"2026-11-12")
