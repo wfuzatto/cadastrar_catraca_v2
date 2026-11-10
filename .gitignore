@@ -1,0 +1,14 @@
+# Nunca versionar credenciais e dados reais de hóspedes
+secrets.dpapi
+settings.json
+.env
+*.pem
+*.pfx
+*.key
+__pycache__/
+.pytest_cache/
+build/
+dist/
+*.spec
+*.log
+*.zip
