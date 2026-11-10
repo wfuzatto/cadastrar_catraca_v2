@@ -1,0 +1,53 @@
+name: Testar e compilar Windows EXE
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Testes independentes de lógica
+        run: python -m unittest discover -s tests -v
+
+  windows-exe:
+    needs: tests
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          architecture: 'x64'
+      - name: Dependências e PyInstaller
+        run: python -m pip install -r requirements.txt
+      - name: Gerar executável
+        run: pyinstaller --noconfirm --clean --onefile --windowed --name CadastrarCatracaV2 --collect-data cv2 --hidden-import PIL._tkinter_finder app.py
+      - name: Validar saída
+        shell: pwsh
+        run: |
+          if (-not (Test-Path dist/CadastrarCatracaV2.exe)) { throw "Executável não encontrado" }
+          Get-Item dist/CadastrarCatracaV2.exe | Select-Object Name,Length
+      - name: Disponibilizar artefato da compilação
+        uses: actions/upload-artifact@v4
+        with:
+          name: CadastrarCatracaV2-Windows
+          path: dist/CadastrarCatracaV2.exe
+          retention-days: 30
+      - name: Publicar EXE na Release de testes
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v2.0.0-teste
+          name: Cadastrar Catraca V2 - Testes Windows
+          prerelease: true
+          files: dist/CadastrarCatracaV2.exe
+          overwrite_files: true
