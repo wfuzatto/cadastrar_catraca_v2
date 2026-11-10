@@ -135,18 +135,24 @@ class BasePage(tk.Frame):
         return var
 
     def run(self,title,fn,success=None):
+        if getattr(self.app,"busy",False):
+            messagebox.showwarning("Operação em andamento","Conclua a operação atual antes de iniciar outra.",parent=self.app.root)
+            return
+        self.app.busy=True
         self.status.set(title+"...")
         self.app.root.update_idletasks()
         def worker():
             try:
                 result=fn()
                 def done():
+                    self.app.busy=False
                     self.status.set(title+" concluído.")
                     if success:success(result)
                 self.app.root.after(0,done)
             except Exception as exc:
                 message=str(exc)
                 def failed():
+                    self.app.busy=False
                     self.status.set("Erro: "+message)
                     messagebox.showerror(title,message,parent=self.app.root)
                 self.app.root.after(0,failed)
@@ -266,8 +272,12 @@ class VisitorPage(RecordPage,PhotoFields):
     def submit(self):
         if self.record is None:
             messagebox.showwarning("Edição","Busque uma reserva primeiro.",parent=self.app.root);return
-        payload=update_information_payload(self.record,self.app.config,self.first.get(),self.last.get(),
+        try:
+            payload=update_information_payload(self.record,self.app.config,self.first.get(),self.last.get(),
                 self.apt.get(),self.group_var.get(),self.nfc.get(),self.photo_bytes)
+        except Exception as exc:
+            messagebox.showerror("Visitor Information",str(exc),parent=self.app.root)
+            return
         self.run("Salvar Visitor Information",lambda:self.app.client().edit_information(payload),lambda _:self.searched.set("Visitor Information salvo; atualize a busca."))
 
 class ReservationPage(RecordPage):
@@ -291,7 +301,11 @@ class ReservationPage(RecordPage):
     def submit(self):
         if self.record is None:
             messagebox.showwarning("Edição","Busque a reserva primeiro.",parent=self.app.root);return
-        payload=update_reservation_payload(self.record,self.app.config,self.entry.get(),self.exit.get())
+        try:
+            payload=update_reservation_payload(self.record,self.app.config,self.entry.get(),self.exit.get())
+        except Exception as exc:
+            messagebox.showerror("Visitor Reservation",str(exc),parent=self.app.root)
+            return
         self.run("Salvar Visitor Reservation",lambda:self.app.client().edit_reservation(payload),
                  lambda _:self.searched.set("Datas salvas; refaça a busca."))
 
@@ -380,6 +394,7 @@ class App:
             self.key,self.secret="",""
             messagebox.showwarning("Credenciais","Não foi possível abrir secrets.dpapi nesta conta Windows: "+str(exc))
         self.unlocked=False
+        self.busy=False
         self.nav=tk.Frame(self.root,bg=NAV,width=240);self.nav.pack(side="left",fill="y");self.nav.pack_propagate(False)
         tk.Label(self.nav,text="CATRACA\nV2",font=("Segoe UI",23,"bold"),fg="#FFFFFF",bg=NAV,justify="left").pack(anchor="w",padx=25,pady=(28,34))
         self.view=tk.Frame(self.root,bg=BG);self.view.pack(fill="both",expand=True)
